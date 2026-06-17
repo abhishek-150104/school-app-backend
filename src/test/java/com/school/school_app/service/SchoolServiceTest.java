@@ -79,7 +79,6 @@ class SchoolServiceTest {
         CreateSchoolRequest req = new CreateSchoolRequest();
         req.setPhone("9876543210");
 
-        when(schoolRepository.existsByEmail(any())).thenReturn(false);
         when(schoolRepository.existsByPhone("9876543210")).thenReturn(true);
 
         assertThatThrownBy(() -> schoolService.createSchool(req))

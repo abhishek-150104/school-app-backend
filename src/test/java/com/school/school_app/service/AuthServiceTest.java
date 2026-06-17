@@ -70,7 +70,6 @@ class AuthServiceTest {
         req.setRole(Role.PARENT);
 
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userRepository.existsByPhone(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
         when(userRepository.save(any())).thenReturn(testUser);
         when(jwtService.generateToken(any())).thenReturn("access-token");
@@ -114,7 +113,6 @@ class AuthServiceTest {
         req.setPhone("9876543210");
         req.setRole(Role.PARENT);
 
-        when(userRepository.existsByEmail(any())).thenReturn(false);
         when(userRepository.existsByPhone("9876543210")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.register(req))

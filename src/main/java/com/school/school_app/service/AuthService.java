@@ -58,7 +58,7 @@ public class AuthService {
                 .enabled(true)
                 .build();
 
-        userRepository.save(user);
+        user = userRepository.save(user);
         return buildAuthResponse(user);
     }
 
