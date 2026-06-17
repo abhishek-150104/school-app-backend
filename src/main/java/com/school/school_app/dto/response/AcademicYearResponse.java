@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @Builder
 public class AcademicYearResponse {
 
-    private Long id;
-    private Long schoolId;
+    private String id;
+    private String schoolId;
     private String label;
     private int startYear;
     private int endYear;
@@ -22,7 +22,7 @@ public class AcademicYearResponse {
     public static AcademicYearResponse from(AcademicYear year) {
         return AcademicYearResponse.builder()
                 .id(year.getId())
-                .schoolId(year.getSchool().getId())
+                .schoolId(year.getSchoolId())
                 .label(year.getLabel())
                 .startYear(year.getStartYear())
                 .endYear(year.getEndYear())

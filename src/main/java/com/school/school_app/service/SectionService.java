@@ -27,7 +27,7 @@ public class SectionService {
     private final UserRepository userRepository;
 
     @Transactional
-    public SectionResponse create(Long classId, CreateSectionRequest request) {
+    public SectionResponse create(String classId, CreateSectionRequest request) {
         ClassRoom classRoom = classRoomService.findById(classId);
 
         if (sectionRepository.existsByClassRoomIdAndName(classId, request.getName())) {
@@ -35,7 +35,8 @@ public class SectionService {
         }
 
         Section section = Section.builder()
-                .classRoom(classRoom)
+                .classRoomId(classRoom.getId())
+                .classRoomName(classRoom.getName())
                 .name(request.getName())
                 .capacity(request.getCapacity())
                 .build();
@@ -43,19 +44,19 @@ public class SectionService {
         return SectionResponse.from(sectionRepository.save(section));
     }
 
-    public List<SectionResponse> getAllByClass(Long classId) {
+    public List<SectionResponse> getAllByClass(String classId) {
         classRoomService.findById(classId);
         return sectionRepository.findByClassRoomIdOrderByNameAsc(classId).stream()
                 .map(SectionResponse::from)
                 .toList();
     }
 
-    public SectionResponse getById(Long classId, Long sectionId) {
+    public SectionResponse getById(String classId, String sectionId) {
         return SectionResponse.from(findByIdAndClass(sectionId, classId));
     }
 
     @Transactional
-    public SectionResponse update(Long classId, Long sectionId, UpdateSectionRequest request) {
+    public SectionResponse update(String classId, String sectionId, UpdateSectionRequest request) {
         Section section = findByIdAndClass(sectionId, classId);
 
         if (request.getName() != null) section.setName(request.getName());
@@ -65,7 +66,7 @@ public class SectionService {
     }
 
     @Transactional
-    public SectionResponse assignTeacher(Long classId, Long sectionId, AssignTeacherRequest request) {
+    public SectionResponse assignTeacher(String classId, String sectionId, AssignTeacherRequest request) {
         Section section = findByIdAndClass(sectionId, classId);
 
         User teacher = userRepository.findById(request.getTeacherId())
@@ -75,17 +76,18 @@ public class SectionService {
             throw new AppException("User is not a teacher", HttpStatus.BAD_REQUEST);
         }
 
-        section.setClassTeacher(teacher);
+        section.setClassTeacherId(teacher.getId());
+        section.setClassTeacherName(teacher.getFullName());
         return SectionResponse.from(sectionRepository.save(section));
     }
 
     @Transactional
-    public void delete(Long classId, Long sectionId) {
+    public void delete(String classId, String sectionId) {
         Section section = findByIdAndClass(sectionId, classId);
         sectionRepository.delete(section);
     }
 
-    private Section findByIdAndClass(Long sectionId, Long classId) {
+    private Section findByIdAndClass(String sectionId, String classId) {
         return sectionRepository.findByIdAndClassRoomId(sectionId, classId)
                 .orElseThrow(() -> new AppException("Section not found", HttpStatus.NOT_FOUND));
     }

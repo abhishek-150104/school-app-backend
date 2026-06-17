@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 @Builder
 public class ClassRoomResponse {
 
-    private Long id;
-    private Long schoolId;
-    private Long academicYearId;
+    private String id;
+    private String schoolId;
+    private String academicYearId;
     private String academicYearLabel;
     private String name;
     private int displayOrder;
@@ -22,9 +22,9 @@ public class ClassRoomResponse {
     public static ClassRoomResponse from(ClassRoom classRoom) {
         return ClassRoomResponse.builder()
                 .id(classRoom.getId())
-                .schoolId(classRoom.getSchool().getId())
-                .academicYearId(classRoom.getAcademicYear().getId())
-                .academicYearLabel(classRoom.getAcademicYear().getLabel())
+                .schoolId(classRoom.getSchoolId())
+                .academicYearId(classRoom.getAcademicYearId())
+                .academicYearLabel(classRoom.getAcademicYearLabel())
                 .name(classRoom.getName())
                 .displayOrder(classRoom.getDisplayOrder())
                 .createdAt(classRoom.getCreatedAt())

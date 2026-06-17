@@ -5,7 +5,6 @@ import com.school.school_app.dto.request.UpdateClassRoomRequest;
 import com.school.school_app.dto.response.ClassRoomResponse;
 import com.school.school_app.entity.AcademicYear;
 import com.school.school_app.entity.ClassRoom;
-import com.school.school_app.entity.School;
 import com.school.school_app.exception.AppException;
 import com.school.school_app.repository.ClassRoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +23,8 @@ public class ClassRoomService {
     private final AcademicYearService academicYearService;
 
     @Transactional
-    public ClassRoomResponse create(Long schoolId, CreateClassRoomRequest request) {
-        School school = schoolService.findById(schoolId);
+    public ClassRoomResponse create(String schoolId, CreateClassRoomRequest request) {
+        schoolService.findById(schoolId);
         AcademicYear academicYear = academicYearService.findByIdAndSchool(request.getAcademicYearId(), schoolId);
 
         if (classRoomRepository.existsBySchoolIdAndAcademicYearIdAndName(schoolId, academicYear.getId(), request.getName())) {
@@ -33,8 +32,9 @@ public class ClassRoomService {
         }
 
         ClassRoom classRoom = ClassRoom.builder()
-                .school(school)
-                .academicYear(academicYear)
+                .schoolId(schoolId)
+                .academicYearId(academicYear.getId())
+                .academicYearLabel(academicYear.getLabel())
                 .name(request.getName())
                 .displayOrder(request.getDisplayOrder())
                 .build();
@@ -42,7 +42,7 @@ public class ClassRoomService {
         return ClassRoomResponse.from(classRoomRepository.save(classRoom));
     }
 
-    public List<ClassRoomResponse> getAllBySchool(Long schoolId, Long academicYearId) {
+    public List<ClassRoomResponse> getAllBySchool(String schoolId, String academicYearId) {
         schoolService.findById(schoolId);
         List<ClassRoom> rooms = (academicYearId != null)
                 ? classRoomRepository.findBySchoolIdAndAcademicYearIdOrderByDisplayOrderAscNameAsc(schoolId, academicYearId)
@@ -51,12 +51,12 @@ public class ClassRoomService {
         return rooms.stream().map(ClassRoomResponse::from).toList();
     }
 
-    public ClassRoomResponse getById(Long schoolId, Long classId) {
+    public ClassRoomResponse getById(String schoolId, String classId) {
         return ClassRoomResponse.from(findByIdAndSchool(classId, schoolId));
     }
 
     @Transactional
-    public ClassRoomResponse update(Long schoolId, Long classId, UpdateClassRoomRequest request) {
+    public ClassRoomResponse update(String schoolId, String classId, UpdateClassRoomRequest request) {
         ClassRoom classRoom = findByIdAndSchool(classId, schoolId);
 
         if (request.getName() != null) classRoom.setName(request.getName());
@@ -66,17 +66,17 @@ public class ClassRoomService {
     }
 
     @Transactional
-    public void delete(Long schoolId, Long classId) {
+    public void delete(String schoolId, String classId) {
         ClassRoom classRoom = findByIdAndSchool(classId, schoolId);
         classRoomRepository.delete(classRoom);
     }
 
-    public ClassRoom findByIdAndSchool(Long classId, Long schoolId) {
+    public ClassRoom findByIdAndSchool(String classId, String schoolId) {
         return classRoomRepository.findByIdAndSchoolId(classId, schoolId)
                 .orElseThrow(() -> new AppException("Class not found", HttpStatus.NOT_FOUND));
     }
 
-    public ClassRoom findById(Long classId) {
+    public ClassRoom findById(String classId) {
         return classRoomRepository.findById(classId)
                 .orElseThrow(() -> new AppException("Class not found", HttpStatus.NOT_FOUND));
     }

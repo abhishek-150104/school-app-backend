@@ -1,15 +1,16 @@
 package com.school.school_app.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(
-    name = "classrooms",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"school_id", "academic_year_id", "name"})
-)
+@Document(collection = "classrooms")
+@CompoundIndex(def = "{'schoolId': 1, 'academicYearId': 1, 'name': 1}", unique = true)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,38 +19,20 @@ import java.time.LocalDateTime;
 public class ClassRoom {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "school_id", nullable = false)
-    private School school;
+    private String schoolId;
+    private String academicYearId;
+    private String academicYearLabel;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "academic_year_id", nullable = false)
-    private AcademicYear academicYear;
-
-    // e.g. "Class 1", "Class 10", "LKG"
-    @Column(nullable = false)
     private String name;
 
-    // used to sort classes in display order
     @Builder.Default
     private int displayOrder = 0;
 
-    @Column(updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

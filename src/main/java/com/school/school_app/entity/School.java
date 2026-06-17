@@ -1,12 +1,15 @@
 package com.school.school_app.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "schools")
+@Document(collection = "schools")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,46 +18,31 @@ import java.time.LocalDateTime;
 public class School {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false)
     private String name;
-
     private String address;
     private String city;
     private String state;
     private String pincode;
 
-    @Column(unique = true)
+    @Indexed(unique = true, sparse = true)
     private String phone;
 
-    @Column(unique = true)
+    @Indexed(unique = true, sparse = true)
     private String email;
 
     private String logoUrl;
     private String website;
     private String affiliationNumber;
-
-    // e.g. CBSE, ICSE, STATE
     private String board;
 
     @Builder.Default
     private boolean active = true;
 
-    @Column(updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

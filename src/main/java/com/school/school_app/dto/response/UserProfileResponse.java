@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class UserProfileResponse {
-    private Long id;
+    private String id;
     private String fullName;
     private String email;
     private String phone;

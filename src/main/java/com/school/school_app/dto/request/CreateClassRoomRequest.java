@@ -8,10 +8,10 @@ import lombok.Data;
 public class CreateClassRoomRequest {
 
     @NotBlank
-    private String name; // e.g. "Class 1", "LKG"
+    private String name;
 
     @NotNull
-    private Long academicYearId;
+    private String academicYearId;
 
     private int displayOrder = 0;
 }

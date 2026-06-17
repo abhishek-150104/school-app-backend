@@ -24,9 +24,8 @@ public class SchoolController {
     @PostMapping
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<SchoolResponse>> createSchool(@Valid @RequestBody CreateSchoolRequest request) {
-        SchoolResponse response = schoolService.createSchool(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("School created successfully", response));
+                .body(ApiResponse.success("School created successfully", schoolService.createSchool(request)));
     }
 
     @GetMapping
@@ -37,21 +36,21 @@ public class SchoolController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT')")
-    public ResponseEntity<ApiResponse<SchoolResponse>> getSchool(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SchoolResponse>> getSchool(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(schoolService.getSchool(id)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<SchoolResponse>> updateSchool(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody UpdateSchoolRequest request) {
         return ResponseEntity.ok(ApiResponse.success("School updated", schoolService.updateSchool(id, request)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteSchool(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteSchool(@PathVariable String id) {
         schoolService.deleteSchool(id);
         return ResponseEntity.ok(ApiResponse.success("School deactivated", null));
     }

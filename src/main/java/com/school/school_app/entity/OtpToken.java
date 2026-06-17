@@ -1,12 +1,13 @@
 package com.school.school_app.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "otp_tokens")
+@Document(collection = "otp_tokens")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,8 +16,7 @@ import java.time.LocalDateTime;
 public class OtpToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     private String phone;
 
@@ -24,13 +24,9 @@ public class OtpToken {
 
     private LocalDateTime expiresAt;
 
+    @Builder.Default
     private boolean used = false;
 
-    @Column(updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
 }

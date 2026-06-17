@@ -3,7 +3,6 @@ package com.school.school_app.service;
 import com.school.school_app.dto.request.CreateAcademicYearRequest;
 import com.school.school_app.dto.response.AcademicYearResponse;
 import com.school.school_app.entity.AcademicYear;
-import com.school.school_app.entity.School;
 import com.school.school_app.exception.AppException;
 import com.school.school_app.repository.AcademicYearRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +20,8 @@ public class AcademicYearService {
     private final SchoolService schoolService;
 
     @Transactional
-    public AcademicYearResponse create(Long schoolId, CreateAcademicYearRequest request) {
-        School school = schoolService.findById(schoolId);
+    public AcademicYearResponse create(String schoolId, CreateAcademicYearRequest request) {
+        schoolService.findById(schoolId);
 
         if (academicYearRepository.existsBySchoolIdAndLabel(schoolId, request.getLabel())) {
             throw new AppException("Academic year '" + request.getLabel() + "' already exists for this school", HttpStatus.CONFLICT);
@@ -32,11 +31,11 @@ public class AcademicYearService {
         }
 
         if (request.isActive()) {
-            academicYearRepository.deactivateAllBySchoolId(schoolId);
+            deactivateAll(schoolId);
         }
 
         AcademicYear year = AcademicYear.builder()
-                .school(school)
+                .schoolId(schoolId)
                 .label(request.getLabel())
                 .startYear(request.getStartYear())
                 .endYear(request.getEndYear())
@@ -46,14 +45,14 @@ public class AcademicYearService {
         return AcademicYearResponse.from(academicYearRepository.save(year));
     }
 
-    public List<AcademicYearResponse> getAllBySchool(Long schoolId) {
+    public List<AcademicYearResponse> getAllBySchool(String schoolId) {
         schoolService.findById(schoolId);
         return academicYearRepository.findBySchoolIdOrderByStartYearDesc(schoolId).stream()
                 .map(AcademicYearResponse::from)
                 .toList();
     }
 
-    public AcademicYearResponse getActive(Long schoolId) {
+    public AcademicYearResponse getActive(String schoolId) {
         schoolService.findById(schoolId);
         AcademicYear year = academicYearRepository.findBySchoolIdAndActiveTrue(schoolId)
                 .orElseThrow(() -> new AppException("No active academic year found for this school", HttpStatus.NOT_FOUND));
@@ -61,26 +60,32 @@ public class AcademicYearService {
     }
 
     @Transactional
-    public AcademicYearResponse activate(Long schoolId, Long yearId) {
+    public AcademicYearResponse activate(String schoolId, String yearId) {
         schoolService.findById(schoolId);
         AcademicYear year = findByIdAndSchool(yearId, schoolId);
 
-        academicYearRepository.deactivateAllBySchoolId(schoolId);
+        deactivateAll(schoolId);
         year.setActive(true);
 
         return AcademicYearResponse.from(academicYearRepository.save(year));
     }
 
     @Transactional
-    public void delete(Long schoolId, Long yearId) {
+    public void delete(String schoolId, String yearId) {
         schoolService.findById(schoolId);
         AcademicYear year = findByIdAndSchool(yearId, schoolId);
         academicYearRepository.delete(year);
     }
 
-    public AcademicYear findByIdAndSchool(Long id, Long schoolId) {
+    public AcademicYear findByIdAndSchool(String id, String schoolId) {
         return academicYearRepository.findById(id)
-                .filter(y -> y.getSchool().getId().equals(schoolId))
+                .filter(y -> y.getSchoolId().equals(schoolId))
                 .orElseThrow(() -> new AppException("Academic year not found", HttpStatus.NOT_FOUND));
+    }
+
+    private void deactivateAll(String schoolId) {
+        List<AcademicYear> years = academicYearRepository.findBySchoolId(schoolId);
+        years.forEach(y -> y.setActive(false));
+        academicYearRepository.saveAll(years);
     }
 }

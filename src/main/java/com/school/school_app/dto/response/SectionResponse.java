@@ -10,12 +10,12 @@ import java.time.LocalDateTime;
 @Builder
 public class SectionResponse {
 
-    private Long id;
-    private Long classRoomId;
+    private String id;
+    private String classRoomId;
     private String classRoomName;
     private String name;
     private int capacity;
-    private Long classTeacherId;
+    private String classTeacherId;
     private String classTeacherName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -23,12 +23,12 @@ public class SectionResponse {
     public static SectionResponse from(Section section) {
         return SectionResponse.builder()
                 .id(section.getId())
-                .classRoomId(section.getClassRoom().getId())
-                .classRoomName(section.getClassRoom().getName())
+                .classRoomId(section.getClassRoomId())
+                .classRoomName(section.getClassRoomName())
                 .name(section.getName())
                 .capacity(section.getCapacity())
-                .classTeacherId(section.getClassTeacher() != null ? section.getClassTeacher().getId() : null)
-                .classTeacherName(section.getClassTeacher() != null ? section.getClassTeacher().getFullName() : null)
+                .classTeacherId(section.getClassTeacherId())
+                .classTeacherName(section.getClassTeacherName())
                 .createdAt(section.getCreatedAt())
                 .updatedAt(section.getUpdatedAt())
                 .build();

@@ -1,15 +1,16 @@
 package com.school.school_app.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(
-    name = "academic_years",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"school_id", "label"})
-)
+@Document(collection = "academic_years")
+@CompoundIndex(def = "{'schoolId': 1, 'label': 1}", unique = true)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,39 +19,22 @@ import java.time.LocalDateTime;
 public class AcademicYear {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "school_id", nullable = false)
-    private School school;
+    private String schoolId;
 
-    // e.g. "2024-25"
-    @Column(nullable = false)
     private String label;
 
-    @Column(nullable = false)
     private int startYear;
 
-    @Column(nullable = false)
     private int endYear;
 
     @Builder.Default
     private boolean active = false;
 
-    @Column(updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

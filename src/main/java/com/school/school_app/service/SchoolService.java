@@ -60,12 +60,12 @@ public class SchoolService {
                 .toList();
     }
 
-    public SchoolResponse getSchool(Long id) {
+    public SchoolResponse getSchool(String id) {
         return SchoolResponse.from(findById(id));
     }
 
     @Transactional
-    public SchoolResponse updateSchool(Long id, UpdateSchoolRequest request) {
+    public SchoolResponse updateSchool(String id, UpdateSchoolRequest request) {
         School school = findById(id);
 
         if (request.getName() != null) school.setName(request.getName());
@@ -85,13 +85,13 @@ public class SchoolService {
     }
 
     @Transactional
-    public void deleteSchool(Long id) {
+    public void deleteSchool(String id) {
         School school = findById(id);
         school.setActive(false);
         schoolRepository.save(school);
     }
 
-    public School findById(Long id) {
+    public School findById(String id) {
         return schoolRepository.findById(id)
                 .orElseThrow(() -> new AppException("School not found", HttpStatus.NOT_FOUND));
     }

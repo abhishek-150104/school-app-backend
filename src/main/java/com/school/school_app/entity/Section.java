@@ -1,15 +1,16 @@
 package com.school.school_app.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(
-    name = "sections",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"classroom_id", "name"})
-)
+@Document(collection = "sections")
+@CompoundIndex(def = "{'classRoomId': 1, 'name': 1}", unique = true)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,38 +19,22 @@ import java.time.LocalDateTime;
 public class Section {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "classroom_id", nullable = false)
-    private ClassRoom classRoom;
+    private String classRoomId;
+    private String classRoomName;
 
-    // e.g. "A", "B", "C"
-    @Column(nullable = false)
     private String name;
 
     @Builder.Default
     private int capacity = 40;
 
-    // assigned class teacher — nullable until teacher is created in Module 4
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_teacher_id")
-    private User classTeacher;
+    private String classTeacherId;
+    private String classTeacherName;
 
-    @Column(updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

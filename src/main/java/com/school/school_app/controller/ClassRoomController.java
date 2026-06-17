@@ -24,34 +24,33 @@ public class ClassRoomController {
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<ClassRoomResponse>> create(
-            @PathVariable Long schoolId,
+            @PathVariable String schoolId,
             @Valid @RequestBody CreateClassRoomRequest request) {
-        ClassRoomResponse response = classRoomService.create(schoolId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Class created", response));
+                .body(ApiResponse.success("Class created", classRoomService.create(schoolId, request)));
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<List<ClassRoomResponse>>> getAll(
-            @PathVariable Long schoolId,
-            @RequestParam(required = false) Long academicYearId) {
+            @PathVariable String schoolId,
+            @RequestParam(required = false) String academicYearId) {
         return ResponseEntity.ok(ApiResponse.success(classRoomService.getAllBySchool(schoolId, academicYearId)));
     }
 
     @GetMapping("/{classId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<ClassRoomResponse>> getById(
-            @PathVariable Long schoolId,
-            @PathVariable Long classId) {
+            @PathVariable String schoolId,
+            @PathVariable String classId) {
         return ResponseEntity.ok(ApiResponse.success(classRoomService.getById(schoolId, classId)));
     }
 
     @PutMapping("/{classId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<ClassRoomResponse>> update(
-            @PathVariable Long schoolId,
-            @PathVariable Long classId,
+            @PathVariable String schoolId,
+            @PathVariable String classId,
             @Valid @RequestBody UpdateClassRoomRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Class updated", classRoomService.update(schoolId, classId, request)));
     }
@@ -59,8 +58,8 @@ public class ClassRoomController {
     @DeleteMapping("/{classId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> delete(
-            @PathVariable Long schoolId,
-            @PathVariable Long classId) {
+            @PathVariable String schoolId,
+            @PathVariable String classId) {
         classRoomService.delete(schoolId, classId);
         return ResponseEntity.ok(ApiResponse.success("Class deleted", null));
     }

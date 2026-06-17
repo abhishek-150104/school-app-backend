@@ -25,32 +25,31 @@ public class SectionController {
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<SectionResponse>> create(
-            @PathVariable Long classId,
+            @PathVariable String classId,
             @Valid @RequestBody CreateSectionRequest request) {
-        SectionResponse response = sectionService.create(classId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Section created", response));
+                .body(ApiResponse.success("Section created", sectionService.create(classId, request)));
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT')")
-    public ResponseEntity<ApiResponse<List<SectionResponse>>> getAll(@PathVariable Long classId) {
+    public ResponseEntity<ApiResponse<List<SectionResponse>>> getAll(@PathVariable String classId) {
         return ResponseEntity.ok(ApiResponse.success(sectionService.getAllByClass(classId)));
     }
 
     @GetMapping("/{sectionId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<SectionResponse>> getById(
-            @PathVariable Long classId,
-            @PathVariable Long sectionId) {
+            @PathVariable String classId,
+            @PathVariable String sectionId) {
         return ResponseEntity.ok(ApiResponse.success(sectionService.getById(classId, sectionId)));
     }
 
     @PutMapping("/{sectionId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<SectionResponse>> update(
-            @PathVariable Long classId,
-            @PathVariable Long sectionId,
+            @PathVariable String classId,
+            @PathVariable String sectionId,
             @Valid @RequestBody UpdateSectionRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Section updated", sectionService.update(classId, sectionId, request)));
     }
@@ -58,8 +57,8 @@ public class SectionController {
     @PatchMapping("/{sectionId}/assign-teacher")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<SectionResponse>> assignTeacher(
-            @PathVariable Long classId,
-            @PathVariable Long sectionId,
+            @PathVariable String classId,
+            @PathVariable String sectionId,
             @Valid @RequestBody AssignTeacherRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Teacher assigned", sectionService.assignTeacher(classId, sectionId, request)));
     }
@@ -67,8 +66,8 @@ public class SectionController {
     @DeleteMapping("/{sectionId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> delete(
-            @PathVariable Long classId,
-            @PathVariable Long sectionId) {
+            @PathVariable String classId,
+            @PathVariable String sectionId) {
         sectionService.delete(classId, sectionId);
         return ResponseEntity.ok(ApiResponse.success("Section deleted", null));
     }

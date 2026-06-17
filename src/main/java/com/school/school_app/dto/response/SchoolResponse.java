@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 public class SchoolResponse {
 
-    private Long id;
+    private String id;
     private String name;
     private String address;
     private String city;
