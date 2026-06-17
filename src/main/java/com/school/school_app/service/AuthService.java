@@ -69,6 +69,7 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.getUsername())
                 .or(() -> userRepository.findByPhone(request.getUsername()))
+                .or(() -> userRepository.findByUsername(request.getUsername()))
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
 
         return buildAuthResponse(user);

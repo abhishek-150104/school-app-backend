@@ -2,6 +2,7 @@ package com.school.school_app.service;
 
 import com.school.school_app.dto.request.CreateStaffRequest;
 import com.school.school_app.dto.request.UpdateStaffRequest;
+import com.school.school_app.dto.response.EnrollStaffResponse;
 import com.school.school_app.dto.response.SectionResponse;
 import com.school.school_app.dto.response.StaffResponse;
 import com.school.school_app.dto.response.TeacherProfileResponse;
@@ -12,22 +13,28 @@ import com.school.school_app.repository.StaffRepository;
 import com.school.school_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class StaffService {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+
     private final StaffRepository staffRepository;
     private final SchoolService schoolService;
     private final UserRepository userRepository;
     private final SectionRepository sectionRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public StaffResponse create(String schoolId, CreateStaffRequest request) {
+    public EnrollStaffResponse create(String schoolId, CreateStaffRequest request) {
         School school = schoolService.findById(schoolId);
 
         if (staffRepository.existsBySchoolIdAndEmployeeId(schoolId, request.getEmployeeId())) {
@@ -36,15 +43,47 @@ public class StaffService {
                     HttpStatus.CONFLICT);
         }
 
-        if (staffRepository.existsByUserId(request.getUserId())) {
-            throw new AppException("This user already has a staff profile", HttpStatus.CONFLICT);
-        }
+        User user;
+        String tempPassword = null;
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+        if (request.getUserId() != null) {
+            // Link existing user
+            if (staffRepository.existsByUserId(request.getUserId())) {
+                throw new AppException("This user already has a staff profile", HttpStatus.CONFLICT);
+            }
+            user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+            if (user.getRole() != Role.TEACHER) {
+                throw new AppException("User must have TEACHER role to be added as staff", HttpStatus.BAD_REQUEST);
+            }
+        } else {
+            // Auto-create user account with employeeId as login
+            if (userRepository.existsByUsername(request.getEmployeeId())) {
+                throw new AppException(
+                        "Employee ID '" + request.getEmployeeId() + "' is already used as a login ID",
+                        HttpStatus.CONFLICT);
+            }
+            if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
+                throw new AppException("Email already in use", HttpStatus.CONFLICT);
+            }
+            if (request.getPhone() != null && userRepository.existsByPhone(request.getPhone())) {
+                throw new AppException("Phone already in use", HttpStatus.CONFLICT);
+            }
 
-        if (user.getRole() != Role.TEACHER) {
-            throw new AppException("User must have TEACHER role to be added as staff", HttpStatus.BAD_REQUEST);
+            String fullName = request.getFirstName().trim() + " " + request.getLastName().trim();
+            tempPassword = generateTempPassword();
+
+            user = User.builder()
+                    .fullName(fullName)
+                    .username(request.getEmployeeId())
+                    .email(request.getEmail())
+                    .phone(request.getPhone())
+                    .password(passwordEncoder.encode(tempPassword))
+                    .role(Role.TEACHER)
+                    .enabled(true)
+                    .passwordChanged(false)
+                    .build();
+            user = userRepository.save(user);
         }
 
         String fullName = request.getFirstName().trim() + " " + request.getLastName().trim();
@@ -65,7 +104,11 @@ public class StaffService {
                 .active(true)
                 .build();
 
-        return StaffResponse.from(staffRepository.save(staff));
+        return EnrollStaffResponse.builder()
+                .staff(StaffResponse.from(staffRepository.save(staff)))
+                .loginId(request.getEmployeeId())
+                .tempPassword(tempPassword)
+                .build();
     }
 
     public List<StaffResponse> getAllBySchool(String schoolId) {
@@ -129,5 +172,13 @@ public class StaffService {
     public Staff findByIdAndSchool(String staffId, String schoolId) {
         return staffRepository.findByIdAndSchoolId(staffId, schoolId)
                 .orElseThrow(() -> new AppException("Staff member not found", HttpStatus.NOT_FOUND));
+    }
+
+    private String generateTempPassword() {
+        StringBuilder sb = new StringBuilder(8);
+        for (int i = 0; i < 8; i++) {
+            sb.append(CHARS.charAt(RANDOM.nextInt(CHARS.length())));
+        }
+        return sb.toString();
     }
 }

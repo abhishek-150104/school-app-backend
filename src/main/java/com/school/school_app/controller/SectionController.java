@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/classes/{classId}/sections")
+@RequestMapping("/api/classrooms/{classId}/sections")
 @RequiredArgsConstructor
 public class SectionController {
 
@@ -51,7 +51,8 @@ public class SectionController {
             @PathVariable String classId,
             @PathVariable String sectionId,
             @Valid @RequestBody UpdateSectionRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Section updated", sectionService.update(classId, sectionId, request)));
+        return ResponseEntity.ok(ApiResponse.success("Section updated",
+                sectionService.update(classId, sectionId, request)));
     }
 
     @PatchMapping("/{sectionId}/assign-teacher")
@@ -60,7 +61,8 @@ public class SectionController {
             @PathVariable String classId,
             @PathVariable String sectionId,
             @Valid @RequestBody AssignTeacherRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Teacher assigned", sectionService.assignTeacher(classId, sectionId, request)));
+        return ResponseEntity.ok(ApiResponse.success("Teacher assigned",
+                sectionService.assignTeacher(classId, sectionId, request)));
     }
 
     @DeleteMapping("/{sectionId}")

@@ -2,6 +2,7 @@ package com.school.school_app.service;
 
 import com.school.school_app.dto.request.CreateStaffRequest;
 import com.school.school_app.dto.request.UpdateStaffRequest;
+import com.school.school_app.dto.response.EnrollStaffResponse;
 import com.school.school_app.dto.response.StaffResponse;
 import com.school.school_app.dto.response.TeacherProfileResponse;
 import com.school.school_app.entity.*;
@@ -16,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +34,7 @@ class StaffServiceTest {
     @Mock SchoolService schoolService;
     @Mock UserRepository userRepository;
     @Mock SectionRepository sectionRepository;
+    @Mock PasswordEncoder passwordEncoder;
 
     @InjectMocks StaffService staffService;
 
@@ -47,6 +50,7 @@ class StaffServiceTest {
                 .id("user-1")
                 .fullName("Amit Sharma")
                 .email("amit@school.com")
+                .username("EMP-001")
                 .role(Role.TEACHER)
                 .build();
 
@@ -66,9 +70,45 @@ class StaffServiceTest {
                 .build();
     }
 
+    // ── Auto-create user path (userId == null) ────────────────────────────────
+
     @Test
-    void create_withValidData_shouldReturnStaffResponse() {
-        CreateStaffRequest req = buildCreateRequest();
+    void create_withAutoCreateUser_shouldReturnEnrollStaffResponse() {
+        CreateStaffRequest req = buildCreateRequestNoUserId();
+
+        when(schoolService.findById("school-1")).thenReturn(testSchool);
+        when(staffRepository.existsBySchoolIdAndEmployeeId("school-1", "EMP-001")).thenReturn(false);
+        when(userRepository.existsByUsername("EMP-001")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed");
+        when(userRepository.save(any(User.class))).thenReturn(testTeacher);
+        when(staffRepository.save(any())).thenReturn(testStaff);
+
+        EnrollStaffResponse result = staffService.create("school-1", req);
+
+        assertThat(result.getStaff().getId()).isEqualTo("staff-1");
+        assertThat(result.getLoginId()).isEqualTo("EMP-001");
+        assertThat(result.getTempPassword()).isNotNull();
+    }
+
+    @Test
+    void create_autoCreate_withDuplicateLoginId_shouldThrowConflict() {
+        CreateStaffRequest req = buildCreateRequestNoUserId();
+
+        when(schoolService.findById("school-1")).thenReturn(testSchool);
+        when(staffRepository.existsBySchoolIdAndEmployeeId(any(), any())).thenReturn(false);
+        when(userRepository.existsByUsername("EMP-001")).thenReturn(true);
+
+        assertThatThrownBy(() -> staffService.create("school-1", req))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getStatus())
+                .isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    // ── Link existing user path (userId != null) ──────────────────────────────
+
+    @Test
+    void create_withExistingUserId_shouldReturnEnrollStaffResponse() {
+        CreateStaffRequest req = buildCreateRequestWithUserId();
 
         when(schoolService.findById("school-1")).thenReturn(testSchool);
         when(staffRepository.existsBySchoolIdAndEmployeeId("school-1", "EMP-001")).thenReturn(false);
@@ -76,16 +116,15 @@ class StaffServiceTest {
         when(userRepository.findById("user-1")).thenReturn(Optional.of(testTeacher));
         when(staffRepository.save(any())).thenReturn(testStaff);
 
-        StaffResponse result = staffService.create("school-1", req);
+        EnrollStaffResponse result = staffService.create("school-1", req);
 
-        assertThat(result.getId()).isEqualTo("staff-1");
-        assertThat(result.getFullName()).isEqualTo("Amit Sharma");
-        assertThat(result.getEmployeeId()).isEqualTo("EMP-001");
+        assertThat(result.getStaff().getId()).isEqualTo("staff-1");
+        assertThat(result.getTempPassword()).isNull();
     }
 
     @Test
     void create_withDuplicateEmployeeId_shouldThrowConflict() {
-        CreateStaffRequest req = buildCreateRequest();
+        CreateStaffRequest req = buildCreateRequestWithUserId();
 
         when(schoolService.findById("school-1")).thenReturn(testSchool);
         when(staffRepository.existsBySchoolIdAndEmployeeId("school-1", "EMP-001")).thenReturn(true);
@@ -98,7 +137,7 @@ class StaffServiceTest {
 
     @Test
     void create_withAlreadyLinkedUser_shouldThrowConflict() {
-        CreateStaffRequest req = buildCreateRequest();
+        CreateStaffRequest req = buildCreateRequestWithUserId();
 
         when(schoolService.findById("school-1")).thenReturn(testSchool);
         when(staffRepository.existsBySchoolIdAndEmployeeId(any(), any())).thenReturn(false);
@@ -112,7 +151,7 @@ class StaffServiceTest {
 
     @Test
     void create_withNonTeacherUser_shouldThrowBadRequest() {
-        CreateStaffRequest req = buildCreateRequest();
+        CreateStaffRequest req = buildCreateRequestWithUserId();
         User admin = User.builder().id("user-1").role(Role.SCHOOL_ADMIN).build();
 
         when(schoolService.findById("school-1")).thenReturn(testSchool);
@@ -125,6 +164,8 @@ class StaffServiceTest {
                 .extracting(e -> ((AppException) e).getStatus())
                 .isEqualTo(HttpStatus.BAD_REQUEST);
     }
+
+    // ── Other operations ──────────────────────────────────────────────────────
 
     @Test
     void getAllBySchool_shouldReturnActiveStaff() {
@@ -218,15 +259,20 @@ class StaffServiceTest {
                 .isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    private CreateStaffRequest buildCreateRequest() {
+    private CreateStaffRequest buildCreateRequestNoUserId() {
         CreateStaffRequest req = new CreateStaffRequest();
-        req.setUserId("user-1");
         req.setEmployeeId("EMP-001");
         req.setFirstName("Amit");
         req.setLastName("Sharma");
         req.setDesignation("Class Teacher");
         req.setSubjects(List.of("Mathematics", "Science"));
         req.setJoiningDate(LocalDate.of(2022, 6, 1));
+        return req;
+    }
+
+    private CreateStaffRequest buildCreateRequestWithUserId() {
+        CreateStaffRequest req = buildCreateRequestNoUserId();
+        req.setUserId("user-1");
         return req;
     }
 }

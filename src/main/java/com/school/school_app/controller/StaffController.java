@@ -3,10 +3,12 @@ package com.school.school_app.controller;
 import com.school.school_app.dto.request.CreateStaffRequest;
 import com.school.school_app.dto.request.UpdateStaffRequest;
 import com.school.school_app.dto.response.ApiResponse;
+import com.school.school_app.dto.response.EnrollStaffResponse;
 import com.school.school_app.dto.response.StaffResponse;
 import com.school.school_app.dto.response.TeacherProfileResponse;
-import com.school.school_app.service.StaffService;
 import com.school.school_app.entity.User;
+import com.school.school_app.service.SchoolContextService;
+import com.school.school_app.service.StaffService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,61 +24,53 @@ import java.util.List;
 public class StaffController {
 
     private final StaffService staffService;
+    private final SchoolContextService schoolContextService;
 
-    // ── School-scoped Staff endpoints ─────────────────────────────────────────
-
-    @PostMapping("/api/schools/{schoolId}/staff")
+    @PostMapping("/api/staff")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
-    public ResponseEntity<ApiResponse<StaffResponse>> create(
-            @PathVariable String schoolId,
+    public ResponseEntity<ApiResponse<EnrollStaffResponse>> create(
             @Valid @RequestBody CreateStaffRequest request) {
-        StaffResponse staff = staffService.create(schoolId, request);
+        EnrollStaffResponse response = staffService.create(schoolContextService.getSchoolId(), request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Staff member created", staff));
+                .body(ApiResponse.success("Staff member created", response));
     }
 
-    @GetMapping("/api/schools/{schoolId}/staff")
+    @GetMapping("/api/staff")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
-    public ResponseEntity<ApiResponse<List<StaffResponse>>> getAll(
-            @PathVariable String schoolId) {
-        return ResponseEntity.ok(ApiResponse.success(staffService.getAllBySchool(schoolId)));
+    public ResponseEntity<ApiResponse<List<StaffResponse>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.success(staffService.getAllBySchool(schoolContextService.getSchoolId())));
     }
 
-    @GetMapping("/api/schools/{schoolId}/staff/search")
+    @GetMapping("/api/staff/search")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<List<StaffResponse>>> search(
-            @PathVariable String schoolId,
             @RequestParam(required = false) String q) {
-        return ResponseEntity.ok(ApiResponse.success(staffService.search(schoolId, q)));
+        return ResponseEntity.ok(ApiResponse.success(
+                staffService.search(schoolContextService.getSchoolId(), q)));
     }
 
-    @GetMapping("/api/schools/{schoolId}/staff/{staffId}")
+    @GetMapping("/api/staff/{staffId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
-    public ResponseEntity<ApiResponse<StaffResponse>> getById(
-            @PathVariable String schoolId,
-            @PathVariable String staffId) {
-        return ResponseEntity.ok(ApiResponse.success(staffService.getById(schoolId, staffId)));
+    public ResponseEntity<ApiResponse<StaffResponse>> getById(@PathVariable String staffId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                staffService.getById(schoolContextService.getSchoolId(), staffId)));
     }
 
-    @PutMapping("/api/schools/{schoolId}/staff/{staffId}")
+    @PutMapping("/api/staff/{staffId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<StaffResponse>> update(
-            @PathVariable String schoolId,
             @PathVariable String staffId,
             @Valid @RequestBody UpdateStaffRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(staffService.update(schoolId, staffId, request)));
+        return ResponseEntity.ok(ApiResponse.success(
+                staffService.update(schoolContextService.getSchoolId(), staffId, request)));
     }
 
-    @DeleteMapping("/api/schools/{schoolId}/staff/{staffId}")
+    @DeleteMapping("/api/staff/{staffId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deactivate(
-            @PathVariable String schoolId,
-            @PathVariable String staffId) {
-        staffService.deactivate(schoolId, staffId);
+    public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable String staffId) {
+        staffService.deactivate(schoolContextService.getSchoolId(), staffId);
         return ResponseEntity.ok(ApiResponse.success("Staff member deactivated", null));
     }
-
-    // ── Teacher self-service ──────────────────────────────────────────────────
 
     @GetMapping("/api/teacher/me/profile")
     @PreAuthorize("hasRole('TEACHER')")

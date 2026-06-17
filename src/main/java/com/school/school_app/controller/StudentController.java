@@ -8,6 +8,7 @@ import com.school.school_app.dto.response.ApiResponse;
 import com.school.school_app.dto.response.EnrollStudentResponse;
 import com.school.school_app.dto.response.StudentResponse;
 import com.school.school_app.entity.User;
+import com.school.school_app.service.SchoolContextService;
 import com.school.school_app.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,86 +25,74 @@ import java.util.List;
 public class StudentController {
 
     private final StudentService studentService;
+    private final SchoolContextService schoolContextService;
 
-    // ── Enrollment ────────────────────────────────────────────────────────────
-
-    @PostMapping("/api/schools/{schoolId}/students")
+    @PostMapping("/api/students")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<EnrollStudentResponse>> enroll(
-            @PathVariable String schoolId,
             @Valid @RequestBody CreateStudentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Student enrolled successfully", studentService.enroll(schoolId, request)));
+                .body(ApiResponse.success("Student enrolled successfully",
+                        studentService.enroll(schoolContextService.getSchoolId(), request)));
     }
 
-    // ── List / Search ─────────────────────────────────────────────────────────
-
-    @GetMapping("/api/schools/{schoolId}/students")
+    @GetMapping("/api/students")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER')")
     public ResponseEntity<ApiResponse<List<StudentResponse>>> getAll(
-            @PathVariable String schoolId,
             @RequestParam(required = false) String classRoomId,
             @RequestParam(required = false) String sectionId) {
-        return ResponseEntity.ok(ApiResponse.success(studentService.getAllBySchool(schoolId, classRoomId, sectionId)));
+        return ResponseEntity.ok(ApiResponse.success(
+                studentService.getAllBySchool(schoolContextService.getSchoolId(), classRoomId, sectionId)));
     }
 
-    @GetMapping("/api/schools/{schoolId}/students/search")
+    @GetMapping("/api/students/search")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER')")
     public ResponseEntity<ApiResponse<List<StudentResponse>>> search(
-            @PathVariable String schoolId,
             @RequestParam(required = false) String query) {
-        return ResponseEntity.ok(ApiResponse.success(studentService.search(schoolId, query)));
+        return ResponseEntity.ok(ApiResponse.success(
+                studentService.search(schoolContextService.getSchoolId(), query)));
     }
 
-    // ── Single student ────────────────────────────────────────────────────────
-
-    @GetMapping("/api/schools/{schoolId}/students/{studentId}")
+    @GetMapping("/api/students/{studentId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER')")
-    public ResponseEntity<ApiResponse<StudentResponse>> getById(
-            @PathVariable String schoolId,
-            @PathVariable String studentId) {
-        return ResponseEntity.ok(ApiResponse.success(studentService.getById(schoolId, studentId)));
+    public ResponseEntity<ApiResponse<StudentResponse>> getById(@PathVariable String studentId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                studentService.getById(schoolContextService.getSchoolId(), studentId)));
     }
 
-    @PutMapping("/api/schools/{schoolId}/students/{studentId}")
+    @PutMapping("/api/students/{studentId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<StudentResponse>> update(
-            @PathVariable String schoolId,
             @PathVariable String studentId,
             @Valid @RequestBody UpdateStudentRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(studentService.update(schoolId, studentId, request)));
+        return ResponseEntity.ok(ApiResponse.success(
+                studentService.update(schoolContextService.getSchoolId(), studentId, request)));
     }
 
-    @DeleteMapping("/api/schools/{schoolId}/students/{studentId}")
+    @DeleteMapping("/api/students/{studentId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deactivate(
-            @PathVariable String schoolId,
-            @PathVariable String studentId) {
-        studentService.deactivate(schoolId, studentId);
+    public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable String studentId) {
+        studentService.deactivate(schoolContextService.getSchoolId(), studentId);
         return ResponseEntity.ok(ApiResponse.success("Student deactivated", null));
     }
 
-    // ── Parent link / Transfer ─────────────────────────────────────────────────
-
-    @PostMapping("/api/schools/{schoolId}/students/{studentId}/link-parent")
+    @PostMapping("/api/students/{studentId}/link-parent")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<StudentResponse>> linkParent(
-            @PathVariable String schoolId,
             @PathVariable String studentId,
             @Valid @RequestBody LinkParentRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Parent linked successfully", studentService.linkParent(schoolId, studentId, request)));
+        return ResponseEntity.ok(ApiResponse.success("Parent linked successfully",
+                studentService.linkParent(schoolContextService.getSchoolId(), studentId, request)));
     }
 
-    @PostMapping("/api/schools/{schoolId}/students/{studentId}/transfer")
+    @PostMapping("/api/students/{studentId}/transfer")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<ApiResponse<StudentResponse>> transfer(
-            @PathVariable String schoolId,
             @PathVariable String studentId,
             @Valid @RequestBody TransferStudentRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Student transferred successfully", studentService.transfer(schoolId, studentId, request)));
+        return ResponseEntity.ok(ApiResponse.success("Student transferred successfully",
+                studentService.transfer(schoolContextService.getSchoolId(), studentId, request)));
     }
-
-    // ── Parent's own children ─────────────────────────────────────────────────
 
     @GetMapping("/api/parents/me/students")
     @PreAuthorize("hasRole('PARENT')")

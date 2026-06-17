@@ -161,11 +161,39 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
         when(userRepository.findByPhone(anyString())).thenReturn(Optional.empty());
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(req))
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getStatus())
                 .isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void login_withStudentAdmissionNumber_shouldReturnAuthResponse() {
+        User studentUser = User.builder()
+                .id("student-user-1")
+                .fullName("Ravi Kumar")
+                .username("ADM-2024-001")
+                .role(Role.STUDENT)
+                .enabled(true)
+                .build();
+
+        LoginRequest req = new LoginRequest();
+        req.setUsername("ADM-2024-001");
+        req.setPassword("tempPass");
+
+        when(userRepository.findByEmail("ADM-2024-001")).thenReturn(Optional.empty());
+        when(userRepository.findByPhone("ADM-2024-001")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("ADM-2024-001")).thenReturn(Optional.of(studentUser));
+        when(jwtService.generateToken(any())).thenReturn("student-token");
+        when(refreshTokenRepository.findByUserIdAndRevokedFalse(anyString())).thenReturn(List.of());
+        when(refreshTokenRepository.save(any())).thenReturn(new RefreshToken());
+
+        AuthResponse result = authService.login(req);
+
+        assertThat(result.getAccessToken()).isEqualTo("student-token");
+        assertThat(result.getUserId()).isEqualTo("student-user-1");
     }
 
     // ── OTP ───────────────────────────────────────────────────────────────────
