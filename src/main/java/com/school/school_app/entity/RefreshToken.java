@@ -1,12 +1,14 @@
 package com.school.school_app.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "refresh_tokens")
+@Document(collection = "refresh_tokens")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,25 +17,18 @@ import java.time.LocalDateTime;
 public class RefreshToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false, unique = true)
+    @Indexed(unique = true)
     private String token;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private String userId;
 
     private LocalDateTime expiresAt;
 
+    @Builder.Default
     private boolean revoked = false;
 
-    @Column(updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
 }

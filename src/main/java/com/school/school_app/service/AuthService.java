@@ -4,7 +4,6 @@ import com.school.school_app.dto.request.*;
 import com.school.school_app.dto.response.AuthResponse;
 import com.school.school_app.entity.OtpToken;
 import com.school.school_app.entity.RefreshToken;
-import com.school.school_app.entity.Role;
 import com.school.school_app.entity.User;
 import com.school.school_app.exception.AppException;
 import com.school.school_app.repository.OtpTokenRepository;
@@ -19,13 +18,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Random;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
     private final OtpTokenRepository otpTokenRepository;
@@ -37,6 +39,9 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        if (request.getRole() != com.school.school_app.entity.Role.PARENT) {
+            throw new AppException("Self-registration is only allowed for PARENT role", HttpStatus.FORBIDDEN);
+        }
         if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
             throw new AppException("Email already registered", HttpStatus.CONFLICT);
         }
@@ -77,7 +82,7 @@ public class AuthService {
 
         otpTokenRepository.deleteAllByPhone(request.getPhone());
 
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
         OtpToken token = OtpToken.builder()
                 .phone(request.getPhone())
                 .otp(otp)
@@ -113,20 +118,19 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException("No account with this email", HttpStatus.NOT_FOUND));
-
-        String resetToken = UUID.randomUUID().toString();
-        // Store token as OTP entry reusing the table with email as phone field
-        OtpToken token = OtpToken.builder()
-                .phone(user.getEmail())
-                .otp(resetToken)
-                .expiresAt(LocalDateTime.now().plusHours(1))
-                .used(false)
-                .build();
-        otpTokenRepository.save(token);
-
-        emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
+        // Always return success to prevent user enumeration
+        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+            otpTokenRepository.deleteAllByPhone(user.getEmail());
+            String resetToken = UUID.randomUUID().toString();
+            OtpToken token = OtpToken.builder()
+                    .phone(user.getEmail())
+                    .otp(resetToken)
+                    .expiresAt(LocalDateTime.now().plusHours(1))
+                    .used(false)
+                    .build();
+            otpTokenRepository.save(token);
+            emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
+        });
     }
 
     @Transactional
@@ -157,30 +161,32 @@ public class AuthService {
             throw new AppException("Refresh token expired or revoked", HttpStatus.UNAUTHORIZED);
         }
 
-        String newAccessToken = jwtService.generateToken(stored.getUser());
+        User user = userRepository.findById(stored.getUserId())
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+
+        String newAccessToken = jwtService.generateToken(user);
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(stored.getToken())
                 .tokenType("Bearer")
-                .userId(stored.getUser().getId())
-                .fullName(stored.getUser().getFullName())
-                .role(stored.getUser().getRole())
+                .userId(user.getId())
+                .fullName(user.getFullName())
+                .role(user.getRole())
                 .build();
     }
 
     @Transactional
     public void logout(User user) {
-        refreshTokenRepository.revokeAllByUser(user);
+        revokeAllTokens(user.getId());
     }
 
     private AuthResponse buildAuthResponse(User user) {
         String accessToken = jwtService.generateToken(user);
 
-        // revoke old refresh tokens and issue a new one
-        refreshTokenRepository.revokeAllByUser(user);
+        revokeAllTokens(user.getId());
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
-                .user(user)
+                .userId(user.getId())
                 .expiresAt(LocalDateTime.now().plusDays(30))
                 .revoked(false)
                 .build();
@@ -194,5 +200,11 @@ public class AuthService {
                 .fullName(user.getFullName())
                 .role(user.getRole())
                 .build();
+    }
+
+    private void revokeAllTokens(String userId) {
+        List<RefreshToken> tokens = refreshTokenRepository.findByUserIdAndRevokedFalse(userId);
+        tokens.forEach(t -> t.setRevoked(true));
+        refreshTokenRepository.saveAll(tokens);
     }
 }
