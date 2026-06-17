@@ -32,7 +32,7 @@ public class StudentController {
             @PathVariable String schoolId,
             @Valid @RequestBody CreateStudentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(studentService.enroll(schoolId, request), "Student enrolled successfully"));
+                .body(ApiResponse.success("Student enrolled successfully", studentService.enroll(schoolId, request)));
     }
 
     // ── List / Search ─────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ public class StudentController {
             @PathVariable String schoolId,
             @PathVariable String studentId) {
         studentService.deactivate(schoolId, studentId);
-        return ResponseEntity.ok(ApiResponse.success(null, "Student deactivated"));
+        return ResponseEntity.ok(ApiResponse.success("Student deactivated", null));
     }
 
     // ── Parent link / Transfer ─────────────────────────────────────────────────
@@ -90,7 +90,7 @@ public class StudentController {
             @PathVariable String schoolId,
             @PathVariable String studentId,
             @Valid @RequestBody LinkParentRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(studentService.linkParent(schoolId, studentId, request), "Parent linked successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Parent linked successfully", studentService.linkParent(schoolId, studentId, request)));
     }
 
     @PostMapping("/api/schools/{schoolId}/students/{studentId}/transfer")
@@ -99,7 +99,7 @@ public class StudentController {
             @PathVariable String schoolId,
             @PathVariable String studentId,
             @Valid @RequestBody TransferStudentRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(studentService.transfer(schoolId, studentId, request), "Student transferred successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Student transferred successfully", studentService.transfer(schoolId, studentId, request)));
     }
 
     // ── Parent's own children ─────────────────────────────────────────────────
