@@ -32,7 +32,7 @@ public class StaffController {
             @Valid @RequestBody CreateStaffRequest request) {
         StaffResponse staff = staffService.create(schoolId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(staff, "Staff member created"));
+                .body(ApiResponse.success("Staff member created", staff));
     }
 
     @GetMapping("/api/schools/{schoolId}/staff")
@@ -73,7 +73,7 @@ public class StaffController {
             @PathVariable String schoolId,
             @PathVariable String staffId) {
         staffService.deactivate(schoolId, staffId);
-        return ResponseEntity.ok(ApiResponse.success(null, "Staff member deactivated"));
+        return ResponseEntity.ok(ApiResponse.success("Staff member deactivated", null));
     }
 
     // ── Teacher self-service ──────────────────────────────────────────────────

@@ -182,6 +182,11 @@ public class StudentService {
                 .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
     }
 
+    public Student findById(String studentId) {
+        return studentRepository.findById(studentId)
+                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
+    }
+
     private User findParentById(String parentId) {
         User parent = userRepository.findById(parentId)
                 .orElseThrow(() -> new AppException("Parent not found", HttpStatus.NOT_FOUND));
