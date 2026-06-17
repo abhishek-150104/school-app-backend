@@ -11,4 +11,5 @@ public interface SectionRepository extends MongoRepository<Section, String> {
     Optional<Section> findByIdAndClassRoomId(String id, String classRoomId);
     boolean existsByClassRoomIdAndName(String classRoomId, String name);
     long countByClassRoomId(String classRoomId);
+    List<Section> findByClassTeacherId(String classTeacherId);
 }

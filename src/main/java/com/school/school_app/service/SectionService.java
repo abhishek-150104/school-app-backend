@@ -87,8 +87,13 @@ public class SectionService {
         sectionRepository.delete(section);
     }
 
-    private Section findByIdAndClass(String sectionId, String classId) {
+    public Section findByIdAndClass(String sectionId, String classId) {
         return sectionRepository.findByIdAndClassRoomId(sectionId, classId)
+                .orElseThrow(() -> new AppException("Section not found", HttpStatus.NOT_FOUND));
+    }
+
+    public Section findById(String sectionId) {
+        return sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new AppException("Section not found", HttpStatus.NOT_FOUND));
     }
 }
