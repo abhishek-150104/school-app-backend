@@ -4,6 +4,7 @@ import com.school.school_app.dto.request.CreateStudentRequest;
 import com.school.school_app.dto.request.LinkParentRequest;
 import com.school.school_app.dto.request.TransferStudentRequest;
 import com.school.school_app.dto.request.UpdateStudentRequest;
+import com.school.school_app.dto.response.EnrollStudentResponse;
 import com.school.school_app.dto.response.StudentResponse;
 import com.school.school_app.entity.*;
 import com.school.school_app.exception.AppException;
@@ -11,14 +12,19 @@ import com.school.school_app.repository.StudentRepository;
 import com.school.school_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class StudentService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
 
     private final StudentRepository studentRepository;
     private final SchoolService schoolService;
@@ -26,9 +32,10 @@ public class StudentService {
     private final ClassRoomService classRoomService;
     private final SectionService sectionService;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public StudentResponse enroll(String schoolId, CreateStudentRequest request) {
+    public EnrollStudentResponse enroll(String schoolId, CreateStudentRequest request) {
         School school = schoolService.findById(schoolId);
         AcademicYear year = academicYearService.findByIdAndSchool(request.getAcademicYearId(), schoolId);
         ClassRoom classRoom = classRoomService.findByIdAndSchool(request.getClassRoomId(), schoolId);
@@ -37,12 +44,25 @@ public class StudentService {
         if (studentRepository.existsBySchoolIdAndAdmissionNumber(schoolId, request.getAdmissionNumber())) {
             throw new AppException("Admission number '" + request.getAdmissionNumber() + "' already exists in this school", HttpStatus.CONFLICT);
         }
-
         if (studentRepository.existsBySchoolIdAndSectionIdAndRollNumber(schoolId, section.getId(), request.getRollNumber())) {
             throw new AppException("Roll number " + request.getRollNumber() + " already exists in this section", HttpStatus.CONFLICT);
         }
+        if (userRepository.existsByUsername(request.getAdmissionNumber())) {
+            throw new AppException("Admission number '" + request.getAdmissionNumber() + "' is already used as a login ID", HttpStatus.CONFLICT);
+        }
 
         String fullName = request.getFirstName().trim() + " " + request.getLastName().trim();
+        String tempPassword = generateTempPassword();
+
+        User studentUser = User.builder()
+                .fullName(fullName)
+                .username(request.getAdmissionNumber())
+                .password(passwordEncoder.encode(tempPassword))
+                .role(Role.STUDENT)
+                .enabled(true)
+                .passwordChanged(false)
+                .build();
+        studentUser = userRepository.save(studentUser);
 
         Student.StudentBuilder builder = Student.builder()
                 .schoolId(school.getId())
@@ -65,6 +85,7 @@ public class StudentService {
                 .religion(request.getReligion())
                 .category(request.getCategory())
                 .address(request.getAddress())
+                .userId(studentUser.getId())
                 .active(true);
 
         if (request.getParentId() != null) {
@@ -74,7 +95,20 @@ public class StudentService {
                     .parentPhone(parent.getPhone());
         }
 
-        return StudentResponse.from(studentRepository.save(builder.build()));
+        Student saved = studentRepository.save(builder.build());
+        return EnrollStudentResponse.builder()
+                .student(StudentResponse.from(saved))
+                .loginId(request.getAdmissionNumber())
+                .tempPassword(tempPassword)
+                .build();
+    }
+
+    private String generateTempPassword() {
+        StringBuilder sb = new StringBuilder(8);
+        for (int i = 0; i < 8; i++) {
+            sb.append(CHARS.charAt(RANDOM.nextInt(CHARS.length())));
+        }
+        return sb.toString();
     }
 
     public List<StudentResponse> getAllBySchool(String schoolId, String classRoomId, String sectionId) {

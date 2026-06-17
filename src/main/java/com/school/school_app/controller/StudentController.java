@@ -5,6 +5,7 @@ import com.school.school_app.dto.request.LinkParentRequest;
 import com.school.school_app.dto.request.TransferStudentRequest;
 import com.school.school_app.dto.request.UpdateStudentRequest;
 import com.school.school_app.dto.response.ApiResponse;
+import com.school.school_app.dto.response.EnrollStudentResponse;
 import com.school.school_app.dto.response.StudentResponse;
 import com.school.school_app.entity.User;
 import com.school.school_app.service.StudentService;
@@ -28,7 +29,7 @@ public class StudentController {
 
     @PostMapping("/api/schools/{schoolId}/students")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SCHOOL_ADMIN')")
-    public ResponseEntity<ApiResponse<StudentResponse>> enroll(
+    public ResponseEntity<ApiResponse<EnrollStudentResponse>> enroll(
             @PathVariable String schoolId,
             @Valid @RequestBody CreateStudentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)

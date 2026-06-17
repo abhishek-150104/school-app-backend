@@ -18,6 +18,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         // username can be email or phone
         return userRepository.findByEmail(username)
                 .or(() -> userRepository.findByPhone(username))
+                .or(() -> userRepository.findByUsername(username))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 }

@@ -59,6 +59,10 @@ public class Student {
     // Contact / Address
     private Address address;
 
+    // Linked user account (STUDENT role)
+    @Indexed
+    private String userId;
+
     // Parent link (denormalized)
     @Indexed
     private String parentId;

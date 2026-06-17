@@ -4,6 +4,7 @@ import com.school.school_app.dto.request.CreateStudentRequest;
 import com.school.school_app.dto.request.LinkParentRequest;
 import com.school.school_app.dto.request.TransferStudentRequest;
 import com.school.school_app.dto.request.UpdateStudentRequest;
+import com.school.school_app.dto.response.EnrollStudentResponse;
 import com.school.school_app.dto.response.StudentResponse;
 import com.school.school_app.entity.*;
 import com.school.school_app.exception.AppException;
@@ -16,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +36,7 @@ class StudentServiceTest {
     @Mock ClassRoomService classRoomService;
     @Mock SectionService sectionService;
     @Mock UserRepository userRepository;
+    @Mock PasswordEncoder passwordEncoder;
 
     @InjectMocks StudentService studentService;
 
@@ -81,8 +84,10 @@ class StudentServiceTest {
     }
 
     @Test
-    void enroll_withValidData_shouldReturnStudentResponse() {
+    void enroll_withValidData_shouldReturnEnrollStudentResponse() {
         CreateStudentRequest req = buildCreateRequest();
+
+        User savedUser = User.builder().id("user-1").username("ADM-001").role(Role.STUDENT).build();
 
         when(schoolService.findById("school-1")).thenReturn(testSchool);
         when(academicYearService.findByIdAndSchool("year-1", "school-1")).thenReturn(testYear);
@@ -90,13 +95,17 @@ class StudentServiceTest {
         when(sectionService.findByIdAndClass("section-1", "class-1")).thenReturn(testSection);
         when(studentRepository.existsBySchoolIdAndAdmissionNumber("school-1", "ADM-001")).thenReturn(false);
         when(studentRepository.existsBySchoolIdAndSectionIdAndRollNumber("school-1", "section-1", 1)).thenReturn(false);
+        when(userRepository.existsByUsername("ADM-001")).thenReturn(false);
+        when(passwordEncoder.encode(any())).thenReturn("hashed");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(studentRepository.save(any())).thenReturn(testStudent);
 
-        StudentResponse result = studentService.enroll("school-1", req);
+        EnrollStudentResponse result = studentService.enroll("school-1", req);
 
-        assertThat(result.getId()).isEqualTo("student-1");
-        assertThat(result.getFullName()).isEqualTo("Rahul Sharma");
-        assertThat(result.getAdmissionNumber()).isEqualTo("ADM-001");
+        assertThat(result.getStudent().getId()).isEqualTo("student-1");
+        assertThat(result.getStudent().getFullName()).isEqualTo("Rahul Sharma");
+        assertThat(result.getLoginId()).isEqualTo("ADM-001");
+        assertThat(result.getTempPassword()).isNotBlank();
     }
 
     @Test

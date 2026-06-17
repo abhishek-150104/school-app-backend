@@ -199,7 +199,27 @@ public class AuthService {
                 .userId(user.getId())
                 .fullName(user.getFullName())
                 .role(user.getRole())
+                .firstLogin(!user.isPasswordChanged())
                 .build();
+    }
+
+    @Transactional
+    public void setupAccount(com.school.school_app.dto.request.SetupAccountRequest request, User currentUser) {
+        if (request.getEmail() != null && !request.getEmail().equals(currentUser.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new AppException("Email already in use", HttpStatus.CONFLICT);
+            }
+            currentUser.setEmail(request.getEmail());
+        }
+        if (request.getPhone() != null && !request.getPhone().equals(currentUser.getPhone())) {
+            if (userRepository.existsByPhone(request.getPhone())) {
+                throw new AppException("Phone already in use", HttpStatus.CONFLICT);
+            }
+            currentUser.setPhone(request.getPhone());
+        }
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        currentUser.setPasswordChanged(true);
+        userRepository.save(currentUser);
     }
 
     private void revokeAllTokens(String userId) {

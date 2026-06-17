@@ -65,4 +65,12 @@ public class AuthController {
         authService.logout(user);
         return ResponseEntity.ok(ApiResponse.success("Logged out successfully"));
     }
+
+    @PutMapping("/setup-account")
+    public ResponseEntity<ApiResponse<Void>> setupAccount(
+            @Valid @RequestBody SetupAccountRequest request,
+            @AuthenticationPrincipal User user) {
+        authService.setupAccount(request, user);
+        return ResponseEntity.ok(ApiResponse.success("Account setup complete"));
+    }
 }

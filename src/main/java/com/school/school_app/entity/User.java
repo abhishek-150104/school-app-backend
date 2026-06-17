@@ -35,6 +35,9 @@ public class User implements UserDetails {
 
     private String password;
 
+    @Indexed(unique = true, sparse = true)
+    private String username; // admission number for STUDENT role
+
     private Role role;
 
     private String profilePhotoUrl;
@@ -44,6 +47,9 @@ public class User implements UserDetails {
 
     @Builder.Default
     private boolean accountNonLocked = true;
+
+    @Builder.Default
+    private boolean passwordChanged = true; // false for students until first login setup
 
     @CreatedDate
     private LocalDateTime createdAt;
@@ -58,6 +64,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
+        if (username != null) return username;
         return email != null ? email : phone;
     }
 

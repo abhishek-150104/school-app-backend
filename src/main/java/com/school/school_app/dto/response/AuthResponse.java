@@ -13,4 +13,5 @@ public class AuthResponse {
     private String userId;
     private String fullName;
     private Role role;
+    private boolean firstLogin;
 }
