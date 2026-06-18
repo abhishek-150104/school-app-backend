@@ -12,4 +12,7 @@ public interface FeeInvoiceRepository extends MongoRepository<FeeInvoice, String
     List<FeeInvoice> findBySchoolIdAndStatus(String schoolId, FeeStatus status);
     List<FeeInvoice> findBySchoolIdAndClassRoomId(String schoolId, String classRoomId);
     List<FeeInvoice> findBySchoolIdAndAcademicYearId(String schoolId, String academicYearId);
+
+    long countBySchoolId(String schoolId);
+    long countBySchoolIdAndStatus(String schoolId, FeeStatus status);
 }

@@ -25,4 +25,6 @@ public interface StudentRepository extends MongoRepository<Student, String> {
 
     @Query("{'schoolId': ?0, 'active': true, $or: [{'fullName': {$regex: ?1, $options: 'i'}}, {'admissionNumber': {$regex: ?1, $options: 'i'}}]}")
     List<Student> searchByNameOrAdmission(String schoolId, String query);
+
+    long countBySchoolId(String schoolId);
 }
