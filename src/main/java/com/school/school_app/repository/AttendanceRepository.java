@@ -1,5 +1,6 @@
 package com.school.school_app.repository;
 
+import com.school.school_app.entity.AttendanceStatus;
 import com.school.school_app.entity.AttendanceRecord;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -22,4 +23,6 @@ public interface AttendanceRepository extends MongoRepository<AttendanceRecord, 
             String schoolId, String studentId, LocalDate from, LocalDate to);
 
     Optional<AttendanceRecord> findByIdAndSchoolId(String id, String schoolId);
+
+    long countBySchoolIdAndDateAndStatus(String schoolId, LocalDate date, AttendanceStatus status);
 }

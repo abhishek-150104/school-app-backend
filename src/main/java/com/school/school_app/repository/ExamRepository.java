@@ -11,4 +11,7 @@ public interface ExamRepository extends MongoRepository<Exam, String> {
     List<Exam> findBySchoolIdAndClassRoomId(String schoolId, String classRoomId);
     List<Exam> findBySchoolIdAndAcademicYearId(String schoolId, String academicYearId);
     Optional<Exam> findByIdAndSchoolId(String id, String schoolId);
+
+    long countBySchoolId(String schoolId);
+    long countBySchoolIdAndStatus(String schoolId, String status);
 }

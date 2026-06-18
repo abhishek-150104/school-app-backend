@@ -23,4 +23,6 @@ public interface StaffRepository extends MongoRepository<Staff, String> {
 
     @Query("{'schoolId': ?0, 'active': true, $or: [{'fullName': {$regex: ?1, $options: 'i'}}, {'employeeId': {$regex: ?1, $options: 'i'}}]}")
     List<Staff> searchByNameOrEmployeeId(String schoolId, String query);
+
+    long countBySchoolId(String schoolId);
 }
