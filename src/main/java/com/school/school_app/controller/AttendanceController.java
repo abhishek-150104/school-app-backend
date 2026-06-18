@@ -62,7 +62,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/api/students/{studentId}/attendance")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','SCHOOL_ADMIN','TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','SCHOOL_ADMIN','TEACHER','STUDENT')")
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getByStudent(
             @PathVariable String studentId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

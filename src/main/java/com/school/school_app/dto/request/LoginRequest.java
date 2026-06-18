@@ -1,5 +1,6 @@
 package com.school.school_app.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -7,7 +8,8 @@ import lombok.Data;
 public class LoginRequest {
 
     @NotBlank
-    private String username; // email or phone
+    @JsonAlias("identifier")
+    private String username; // email, phone, admissionNumber, or employeeId
 
     @NotBlank
     private String password;

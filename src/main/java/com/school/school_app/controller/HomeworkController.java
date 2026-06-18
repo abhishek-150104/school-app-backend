@@ -46,7 +46,7 @@ public class HomeworkController {
 
     // GET /api/sections/{sectionId}/homework?from=&to=
     @GetMapping("/api/sections/{sectionId}/homework")
-    @PreAuthorize("hasAnyRole('TEACHER', 'SCHOOL_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'SCHOOL_ADMIN', 'SUPER_ADMIN', 'STUDENT')")
     public ResponseEntity<ApiResponse<List<HomeworkResponse>>> getBySection(
             @PathVariable String sectionId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -61,7 +61,7 @@ public class HomeworkController {
 
     // GET /api/homework/{homeworkId}
     @GetMapping("/api/homework/{homeworkId}")
-    @PreAuthorize("hasAnyRole('TEACHER', 'SCHOOL_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'SCHOOL_ADMIN', 'SUPER_ADMIN', 'STUDENT')")
     public ResponseEntity<ApiResponse<HomeworkResponse>> getById(
             @PathVariable String homeworkId) {
 
